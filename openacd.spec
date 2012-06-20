@@ -1,59 +1,45 @@
 Name: openacd
-Version: 0.9.5
+Version: 2.0
 Summary: OpenACD Call Center
-Release: %{?buildno:%buildno}%{!?buildno:1}
-Group: Applications/Communications
-Vendor: OpenACD
-Packager: Douglas Hubler
+Release: alt1.git.54357e2
+Group: System/Servers
 License: CPAL
-AutoReqProv: no
-URL: http://github.com/OpenACD/OpenACD/wiki
-Source: OpenACD.tar.gz
+Url: http://github.com/OpenACD/OpenACD/wiki
+Source: %name-%version.tar
 
-BuildRequires: erlang
-
-# unclear how to express >= R13B04 or >= R13B-04 ?
-Requires: erlang
-
-BuildRoot: %{_builddir}/%{name}-root
-Prefix: /
+BuildRequires: rpm-build-erlang rebar erlang-devel erlang-otp-devel mochiweb-devel erlang-protobuffs erlang-errd erlang-gen_smtp erlang-gen_leader_revival erlang-gen_server_mock erlang-meck erlang-iconv erlang-erlnetstr
 
 %description
 OpenACD is a skills-based, Call Center software based on FreeSWITCH and built in erlang.
 
 %prep
-%setup -n OpenACD
+%setup
+sed -i ''6,19d'' rebar.config
+sed -i ''79,81d'' Makefile
+ln -s %_erllibdir deps
+sed -i '/^install/s/compile//' Makefile
 
 %build
-make compile
+rebar -v compile
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT PREFIX=%{prefix}
+make install DESTDIR=$RPM_BUILD_ROOT PREFIX=%prefix
 
-%clean
-rm -rf $RPM_BUILD_ROOT
+mv -f %buildroot/usr/var %buildroot/var
+mv -f %buildroot/usr/etc %buildroot/etc
+mkdir -p %buildroot%_erllibdir
+mv -f %buildroot%_libdir/openacd/lib/openacd-2.0 %buildroot%_erllibdir/
 
-%pre
-
-%post
+exit 1
 
 %files
-%defattr(-,root,root,-)
-%dir %{prefix}/%{_lib}/openacd
-%dir %{prefix}/var/lib/openacd
-%dir %{prefix}/var/log/openacd
-%dir %{prefix}/etc/openacd
-%{prefix}/%_lib/openacd/*
-%{prefix}/var/lib/openacd/*
-%{prefix}/etc/openacd/*
-%{prefix}/bin/openacd
-%{prefix}/bin/nodetool
-
+%_libdir/openacd
+%_erllibdir/*
+/var/lib/openacd
+/var/log/openacd
+/etc/openacd
+/usr/bin/*
 
 %changelog
-* Thu Apr 25 2012 Cristi Starasciuc <cristi@ezuce.com>
-- New packaging
-* Fri Jun 24 2011 Micah Warren <micahw@lordnull.com>
-- Updated provider, url, and removed no longer needed enviroment variables.
-* Thu Jan 27 2011 Douglas Hubler <douglas@hubler.us>
-- Initial release
+* Wed Jun 20 2012 Slava Dubrovskiy <dubrsl@altlinux.org> 2.0-alt1.git.54357e2
+- Build for ALT
